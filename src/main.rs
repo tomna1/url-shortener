@@ -58,14 +58,12 @@ struct CreateRequestResponse {
 async fn create_url(
     State(url_store): State<Arc<Mutex<UrlStore>>>,
     Json(payload): Json<CreateRequest>,
-) -> Json<CreateRequestResponse> {
+) -> Result<Json<CreateRequestResponse>, Error> {
     info!("Attempting to shorten url '{}'", payload.url);
-    let mut store = url_store.lock().expect("Failed to get lock for url_store");
-    let short = store
-        .store_url(&payload.url)
-        .expect("Failed to generate short url");
+    let mut store = url_store.lock().map_err(|_| Error::LockMutex)?;
+    let short = store.store_url(&payload.url)?;
 
-    Json(CreateRequestResponse { short_url: short })
+    Ok(Json(CreateRequestResponse { short_url: short }))
 }
 
 async fn health_handler() -> &'static str {
