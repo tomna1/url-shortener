@@ -2,22 +2,32 @@ use axum::{
     Json, Router,
     routing::{get, post},
 };
+use clap::Parser;
 use log::info;
 use serde::{Deserialize, Serialize};
+
+#[derive(Parser)]
+#[command(version, about)]
+struct Args {
+    #[arg(long)]
+    http_bind_host: String,
+}
 
 #[tokio::main]
 async fn main() {
     env_logger::init();
 
+    let args = Args::parse();
+
     let app = Router::new()
         .route("/health", get(health_handler))
         .route("/shorten", post(create_url));
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000")
+    let listener = tokio::net::TcpListener::bind(&args.http_bind_host)
         .await
-        .expect("Failed to tcp bind on 0.0.0.0:3000");
+        .expect(&format!("Failed to tcp bind on {}", args.http_bind_host));
 
-    info!("Starting web server listening on 0.0.0.0:3000");
+    info!("Starting web server listening on {}", args.http_bind_host);
     axum::serve(listener, app)
         .await
         .expect("Failed to server http server")
