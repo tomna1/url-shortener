@@ -2,10 +2,13 @@ use axum::{
     Json, Router,
     routing::{get, post},
 };
+use log::info;
 use serde::{Deserialize, Serialize};
 
 #[tokio::main]
 async fn main() {
+    env_logger::init();
+
     let app = Router::new()
         .route("/health", get(health_handler))
         .route("/shorten", post(create_url));
@@ -14,6 +17,7 @@ async fn main() {
         .await
         .expect("Failed to tcp bind on 0.0.0.0:3000");
 
+    info!("Starting web server listening on 0.0.0.0:3000");
     axum::serve(listener, app)
         .await
         .expect("Failed to server http server")
