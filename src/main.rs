@@ -6,6 +6,9 @@ use clap::Parser;
 use log::info;
 use serde::{Deserialize, Serialize};
 
+mod error;
+pub use error::Error;
+
 #[derive(Parser)]
 #[command(version, about)]
 struct Args {
@@ -14,7 +17,7 @@ struct Args {
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<(), Error> {
     env_logger::init();
 
     let args = Args::parse();
@@ -25,12 +28,13 @@ async fn main() {
 
     let listener = tokio::net::TcpListener::bind(&args.http_bind_host)
         .await
-        .expect(&format!("Failed to tcp bind on {}", args.http_bind_host));
+        .map_err(|e| Error::TcpListenerBind(e))?;
 
     info!("Starting web server listening on {}", args.http_bind_host);
     axum::serve(listener, app)
         .await
-        .expect("Failed to server http server")
+        .map_err(|e| Error::WebServerStart(e))?;
+    Ok(())
 }
 
 #[derive(Deserialize)]
