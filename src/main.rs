@@ -59,7 +59,7 @@ async fn create_url(
     State(url_store): State<Arc<Mutex<UrlStore>>>,
     Json(payload): Json<CreateRequest>,
 ) -> Json<CreateRequestResponse> {
-    info!("Tryinh to create url");
+    info!("Attempting to shorten url '{}'", payload.url);
     let mut store = url_store.lock().expect("Failed to get lock for url_store");
     let short = store
         .store_url(&payload.url)
